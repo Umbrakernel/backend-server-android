@@ -1,0 +1,5 @@
+/mnt/c/Study/VisualProgramming/backend-server-android/build/CMakeFiles/imgui.dir
+/mnt/c/Study/VisualProgramming/backend-server-android/build/CMakeFiles/implot.dir
+/mnt/c/Study/VisualProgramming/backend-server-android/build/CMakeFiles/main.dir
+/mnt/c/Study/VisualProgramming/backend-server-android/build/CMakeFiles/edit_cache.dir
+/mnt/c/Study/VisualProgramming/backend-server-android/build/CMakeFiles/rebuild_cache.dir
