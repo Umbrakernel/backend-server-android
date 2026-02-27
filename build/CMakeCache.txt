@@ -278,8 +278,17 @@ OPENGL_opengl_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libOpenGL.so
 //Path to a file.
 OPENGL_xmesa_INCLUDE_DIR:PATH=OPENGL_xmesa_INCLUDE_DIR-NOTFOUND
 
+//Arguments to supply to pkg-config
+PKG_CONFIG_ARGN:STRING=
+
+//pkg-config executable
+PKG_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/pkg-config
+
 //The directory containing a CMake configuration file for SDL2.
 SDL2_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/SDL2
+
+//Path to a library.
+pkgcfg_lib_ZMQ_zmq:FILEPATH=/usr/lib/x86_64-linux-gnu/libzmq.so
 
 
 ########################
@@ -364,6 +373,8 @@ CMAKE_GENERATOR_INSTANCE:INTERNAL=
 CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
+//Test CMAKE_HAVE_LIBC_PTHREAD
+CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=1
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/mnt/c/Study/VisualProgramming/backend-server-android
@@ -435,6 +446,10 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 FIND_PACKAGE_MESSAGE_DETAILS_GLEW:INTERNAL=[/usr/include][/usr/lib/x86_64-linux-gnu/libGLEW.so][v2.2.0()]
 //Details about finding OpenGL
 FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[/usr/lib/x86_64-linux-gnu/libOpenGL.so][/usr/lib/x86_64-linux-gnu/libGLX.so][/usr/include][c ][v()]
+//Details about finding PkgConfig
+FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig:INTERNAL=[/usr/bin/pkg-config][v1.8.1()]
+//Details about finding Threads
+FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //ADVANCED property for variable: GLEW_INCLUDE_DIR
 GLEW_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GLEW_SHARED_LIBRARY_DEBUG
@@ -469,6 +484,50 @@ OPENGL_glx_LIBRARY-ADVANCED:INTERNAL=1
 OPENGL_opengl_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: OPENGL_xmesa_INCLUDE_DIR
 OPENGL_xmesa_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_ARGN
+PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
+PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
+ZMQ_CFLAGS:INTERNAL=-I/usr/include;-isystem;/usr/include/mit-krb5;-I/usr/include/pgm-5.3;-I/usr/include/libxml2;-I/usr/include/x86_64-linux-gnu
+ZMQ_CFLAGS_I:INTERNAL=
+ZMQ_CFLAGS_OTHER:INTERNAL=-isystem;/usr/include/mit-krb5
+ZMQ_FOUND:INTERNAL=1
+ZMQ_INCLUDEDIR:INTERNAL=/usr/include
+ZMQ_INCLUDE_DIRS:INTERNAL=/usr/include;/usr/include/pgm-5.3;/usr/include/libxml2;/usr/include/x86_64-linux-gnu
+ZMQ_LDFLAGS:INTERNAL=-L/usr/lib/x86_64-linux-gnu;-lzmq
+ZMQ_LDFLAGS_OTHER:INTERNAL=
+ZMQ_LIBDIR:INTERNAL=/usr/lib/x86_64-linux-gnu
+ZMQ_LIBRARIES:INTERNAL=zmq
+ZMQ_LIBRARY_DIRS:INTERNAL=/usr/lib/x86_64-linux-gnu
+ZMQ_LIBS:INTERNAL=
+ZMQ_LIBS_L:INTERNAL=
+ZMQ_LIBS_OTHER:INTERNAL=
+ZMQ_LIBS_PATHS:INTERNAL=
+ZMQ_MODULE_NAME:INTERNAL=libzmq
+ZMQ_PREFIX:INTERNAL=/usr
+ZMQ_STATIC_CFLAGS:INTERNAL=-I/usr/include;-isystem;/usr/include/mit-krb5;-I/usr/include/pgm-5.3;-I/usr/include/libxml2;-I/usr/include/x86_64-linux-gnu
+ZMQ_STATIC_CFLAGS_I:INTERNAL=
+ZMQ_STATIC_CFLAGS_OTHER:INTERNAL=-isystem;/usr/include/mit-krb5
+ZMQ_STATIC_INCLUDE_DIRS:INTERNAL=/usr/include;/usr/include/pgm-5.3;/usr/include/libxml2;/usr/include/x86_64-linux-gnu
+ZMQ_STATIC_LDFLAGS:INTERNAL=-L/usr/lib/x86_64-linux-gnu;-lzmq;-lstdc++;-lpthread;-lrt;-L/usr/lib/x86_64-linux-gnu/mit-krb5;-lgssapi_krb5;-L/usr/lib/x86_64-linux-gnu/mit-krb5;-lkrb5;-lk5crypto;-lcom_err;-lkrb5support;-lsodium;-pthread;-lpgm;-lm;-lnorm;libprotokit.a;-L/usr/lib/x86_64-linux-gnu;-lxml2;-licui18n;-licuuc;-licudata;-lz;-llzma;-lm;-lbsd;-lmd
+ZMQ_STATIC_LDFLAGS_OTHER:INTERNAL=-pthread;libprotokit.a
+ZMQ_STATIC_LIBDIR:INTERNAL=
+ZMQ_STATIC_LIBRARIES:INTERNAL=zmq;stdc++;pthread;rt;gssapi_krb5;krb5;k5crypto;com_err;krb5support;sodium;pgm;m;norm;xml2;icui18n;icuuc;icudata;z;lzma;m;bsd;md
+ZMQ_STATIC_LIBRARY_DIRS:INTERNAL=/usr/lib/x86_64-linux-gnu;/usr/lib/x86_64-linux-gnu/mit-krb5;/usr/lib/x86_64-linux-gnu/mit-krb5;/usr/lib/x86_64-linux-gnu
+ZMQ_STATIC_LIBS:INTERNAL=
+ZMQ_STATIC_LIBS_L:INTERNAL=
+ZMQ_STATIC_LIBS_OTHER:INTERNAL=
+ZMQ_STATIC_LIBS_PATHS:INTERNAL=
+ZMQ_VERSION:INTERNAL=4.3.5
+ZMQ_libzmq_INCLUDEDIR:INTERNAL=
+ZMQ_libzmq_LIBDIR:INTERNAL=
+ZMQ_libzmq_PREFIX:INTERNAL=
+ZMQ_libzmq_VERSION:INTERNAL=
 //linker supports push/pop state
 _CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
+__pkg_config_arguments_ZMQ:INTERNAL=REQUIRED;libzmq
+__pkg_config_checked_ZMQ:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib_ZMQ_zmq
+pkgcfg_lib_ZMQ_zmq-ADVANCED:INTERNAL=1
+prefix_result:INTERNAL=/usr/lib/x86_64-linux-gnu
 

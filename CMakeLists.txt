@@ -7,15 +7,18 @@ set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/external)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
-# SDL2
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-# OpenGL/GLEW
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-include_directories(${INCLUDE_DIR})
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZMQ REQUIRED libzmq)
+
+find_package(Threads REQUIRED)
+
+include_directories(${INCLUDE_DIR} ${ZMQ_INCLUDE_DIRS})
 
 add_library(imgui STATIC
     ${EXTERNAL_DIR}/imgui/imgui.cpp
@@ -26,6 +29,7 @@ add_library(imgui STATIC
     ${EXTERNAL_DIR}/imgui/backends/imgui_impl_sdl2.cpp
     ${EXTERNAL_DIR}/imgui/backends/imgui_impl_opengl3.cpp
 )
+
 target_include_directories(imgui PUBLIC ${EXTERNAL_DIR}/imgui)
 target_compile_options(imgui PRIVATE -fPIC)
 
@@ -39,4 +43,13 @@ target_link_libraries(implot PRIVATE imgui)
 target_compile_options(implot PRIVATE -fPIC)
 
 add_executable(main ${SRC_DIR}/main.cpp)
-target_link_libraries(main PRIVATE imgui implot ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
+
+target_link_libraries(main PRIVATE 
+    imgui 
+    implot 
+    ${SDL2_LIBRARIES} 
+    ${OPENGL_LIBRARIES} 
+    ${GLEW_LIBRARIES}
+    ${ZMQ_LIBRARIES}
+    Threads::Threads
+)
