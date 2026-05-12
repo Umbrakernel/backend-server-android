@@ -322,6 +322,9 @@ CMakeFiles/main.dir/src/main.cpp.o
  /usr/include/nlohmann/ordered_map.hpp
  /usr/include/nlohmann/thirdparty/hedley/hedley.hpp
  /usr/include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+ /usr/include/postgresql/libpq-fe.h
+ /usr/include/postgresql/pg_config_ext.h
+ /usr/include/postgresql/postgres_ext.h
  /usr/include/pthread.h
  /usr/include/sched.h
  /usr/include/signal.h

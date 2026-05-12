@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/mnt/c/Study/VisualProgramming/backend-server-android/include -I/usr/include/pgm-5.3 -I/usr/include/libxml2 -I/mnt/c/Study/VisualProgramming/backend-server-android/external/imgui -I/mnt/c/Study/VisualProgramming/backend-server-android/external/implot -isystem /usr/include/SDL2
+CXX_INCLUDES = -I/mnt/c/Study/VisualProgramming/backend-server-android/include -I/usr/include/pgm-5.3 -I/usr/include/libxml2 -I/mnt/c/Study/VisualProgramming/backend-server-android/external/imgui -I/mnt/c/Study/VisualProgramming/backend-server-android/external/implot -isystem /usr/include/SDL2 -isystem /usr/include/postgresql
 
 CXX_FLAGS = -std=gnu++17
 

@@ -12,6 +12,7 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(PostgreSQL REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZMQ REQUIRED libzmq)
@@ -19,6 +20,7 @@ pkg_check_modules(ZMQ REQUIRED libzmq)
 find_package(Threads REQUIRED)
 
 include_directories(${INCLUDE_DIR} ${ZMQ_INCLUDE_DIRS})
+include_directories(${PostgreSQL_INCLUDE_DIRS})
 
 add_library(imgui STATIC
     ${EXTERNAL_DIR}/imgui/imgui.cpp
@@ -51,5 +53,6 @@ target_link_libraries(main PRIVATE
     ${OPENGL_LIBRARIES} 
     ${GLEW_LIBRARIES}
     ${ZMQ_LIBRARIES}
+    PostgreSQL::PostgreSQL
     Threads::Threads
 )

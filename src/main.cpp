@@ -5,10 +5,12 @@
 #include <mutex>
 #include <fstream>
 #include <string>
+#include <map>
 #include <vector>
 
 #include <zmq.hpp>
 #include <nlohmann/json.hpp>
+#include <libpq-fe.h>
 
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_sdl2.h"
@@ -17,6 +19,13 @@
 
 using namespace std;
 using json = nlohmann::json;
+
+#define DB_HOST "localhost"
+#define DB_PORT "5433"
+#define DB_NAME "telemetry_db"
+#define DB_USER "postgres"
+#define DB_PASSWORD "1234"
+#define DB_TABLE "telemetry_metrics"
 
 struct telemetry {
     float latitude = 0.0f;
@@ -35,6 +44,86 @@ struct telemetry {
 
     mutex mtx;
 };
+
+map<int, vector<float>> rsrp_by_pci;
+map<int, vector<float>> rssi_by_pci;
+map<int, vector<float>> sinr_by_pci;
+vector<float> multi_time_history;
+
+PGconn* connect_db() {
+    const char* conninfo =
+        "host=" DB_HOST
+        " port=" DB_PORT
+        " dbname=" DB_NAME
+        " user=" DB_USER
+        " password=" DB_PASSWORD;
+
+    PGconn* con = PQconnectdb(conninfo);
+    if (PQstatus(con) != CONNECTION_OK) {
+        cerr << "DB connection error: " << PQerrorMessage(con) << endl;
+        PQfinish(con);
+        return nullptr;
+    }
+
+    cout << "DB connected" << endl;
+    return con;
+}
+
+void insert_telemetry_row(
+    PGconn* con,
+    float latitude,
+    float longitude,
+    float altitude,
+    float accuracy,
+    long long time,
+    int rsrp,
+    int rsrq,
+    int rssi,
+    float rssnr,
+    const string& network_type,
+    const string& operator_name
+) {
+    if (!con) return;
+
+    const string query =
+        "INSERT INTO " + string(DB_TABLE) + " ("
+        "time_ms, latitude, longitude, altitude, accuracy, "
+        "rsrp, rsrq, rssi, rssnr, network_type, operator_name"
+        ") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)";
+
+    const string p1 = to_string(time);
+    const string p2 = to_string(latitude);
+    const string p3 = to_string(longitude);
+    const string p4 = to_string(altitude);
+    const string p5 = to_string(accuracy);
+    const string p6 = to_string(rsrp);
+    const string p7 = to_string(rsrq);
+    const string p8 = to_string(rssi);
+    const string p9 = to_string(rssnr);
+    const string p10 = network_type;
+    const string p11 = operator_name;
+
+    const char* params[11] = {
+        p1.c_str(), p2.c_str(), p3.c_str(), p4.c_str(), p5.c_str(),
+        p6.c_str(), p7.c_str(), p8.c_str(), p9.c_str(), p10.c_str(), p11.c_str()
+    };
+
+    PGresult* res = PQexecParams(
+        con,
+        query.c_str(),
+        11,
+        nullptr,
+        params,
+        nullptr,
+        nullptr,
+        0
+    );
+
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        cerr << "DB insert error: " << PQresultErrorMessage(res) << endl;
+    }
+    PQclear(res);
+}
 
 void load_location_history_from_json_file(
     const string& file_path,
@@ -120,6 +209,7 @@ void run_server(telemetry *tm) {
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::rep);
     socket.bind("tcp://*:5555");
+    PGconn* db = connect_db();
 
     while (true) {
         zmq::message_t request;
@@ -136,31 +226,33 @@ void run_server(telemetry *tm) {
             float accuracy = j.value("accuracy", 0.0f);
             long long time = j.value("time", 0LL);
 
-            int rsrp = -200;
-            if (j.contains("rsrp") && !j["rsrp"].is_null()) {
-                rsrp = j["rsrp"].get<int>();
-            }
+            int rsrp  = j.value("rsrp", -200);
+            int rsrq  = j.value("rsrq", -200);
+            int rssi  = j.value("rssi", -200);
+            float rssnr = j.value("rssnr", -9999.0f);
 
-            int rsrq = -200;
-            if (j.contains("rsrq") && !j["rsrq"].is_null()) {
-                rsrq = j["rsrq"].get<int>();
-            }
-
-            int rssi = -200;
-            if (j.contains("rssi") && !j["rssi"].is_null()) {
-                rssi = j["rssi"].get<int>();
-            }
-
-            float rssnr = -9999.0f;
-            if (j.contains("rssnr") && !j["rssnr"].is_null()) {
-                rssnr = j["rssnr"].get<float>();
-            }
-
+            if (rssnr > 1000.0f || rssnr < -1000.0f)
+                rssnr = -9999.0f;
 
             string network_type = j.value("networkType", string("UNKNOWN"));
             string operator_name = j.value("operatorName", string("UNKNOWN"));
             ofstream file("location_data.json", ios::app);
             file << j.dump() << endl;
+
+            insert_telemetry_row(
+                db,
+                latitude,
+                longitude,
+                altitude,
+                accuracy,
+                time,
+                rsrp,
+                rsrq,
+                rssi,
+                rssnr,
+                network_type,
+                operator_name
+            );
 
             {
                 lock_guard<mutex> lock(tm->mtx);
@@ -178,10 +270,37 @@ void run_server(telemetry *tm) {
                 tm->operator_name = operator_name;
             }
 
+            float t = static_cast<float>(time) / 1000.0f;
+
+            multi_time_history.push_back(t);
+
+            int pci = j.value("pci", 0);
+
+            rsrp_by_pci[pci].push_back((float)rsrp);
+            rssi_by_pci[pci].push_back((float)rssi);
+            sinr_by_pci[pci].push_back((float)rssnr);
+
+            if (multi_time_history.size() > 500)
+                multi_time_history.erase(multi_time_history.begin());
+
+            for (auto& [id, arr] : rsrp_by_pci)
+                if (arr.size() > 500) arr.erase(arr.begin());
+
+            for (auto& [id, arr] : rssi_by_pci)
+                if (arr.size() > 500) arr.erase(arr.begin());
+
+            for (auto& [id, arr] : sinr_by_pci)
+                if (arr.size() > 500) arr.erase(arr.begin());
+
             socket.send(zmq::str_buffer("OK"), zmq::send_flags::none);
-        } catch (...) {
-            socket.send(zmq::str_buffer("Error"), zmq::send_flags::none);
+        } catch (const exception& e) { 
+            cout << "SERVER ERROR: " << e.what() << endl; 
+            socket.send(zmq::str_buffer("Error"), zmq::send_flags::none); 
         }
+    }
+
+    if (db) {
+        PQfinish(db);
     }
 }
 
@@ -270,15 +389,56 @@ void run_gui(telemetry *tm) {
         ImGui::Text("Operator: %s", local.operator_name.c_str());
 
         if (ImPlot::BeginPlot("RSRP vs Time")) {
-            if (!rsrp_history.empty()) {
-                ImPlot::SetupAxes("Time (s)", "RSRP (dBm)");
+            ImPlot::SetupAxes("Time (s)", "RSRP (dBm)");
+            ImPlot::SetupLegend(ImPlotLocation_East);
+
+            for (auto& [pci, values] : rsrp_by_pci) {
+                string label = "PCI " + to_string(pci);
+
                 ImPlot::PlotLine(
-                    "RSRP",
-                    time_history.data(),
-                    rsrp_history.data(),
-                    static_cast<int>(rsrp_history.size())
+                    label.c_str(),
+                    multi_time_history.data(),
+                    values.data(),
+                    (int)values.size()
                 );
             }
+
+            ImPlot::EndPlot();
+        }
+
+        if (ImPlot::BeginPlot("RSSI vs Time")) {
+            ImPlot::SetupAxes("Time (s)", "RSSI (dBm)");
+            ImPlot::SetupLegend(ImPlotLocation_East);
+
+            for (auto& [pci, values] : rssi_by_pci) {
+                string label = "PCI " + to_string(pci);
+
+                ImPlot::PlotLine(
+                    label.c_str(),
+                    multi_time_history.data(),
+                    values.data(),
+                    (int)values.size()
+                );
+            }
+
+            ImPlot::EndPlot();
+        }
+
+        if (ImPlot::BeginPlot("SINR vs Time")) {
+            ImPlot::SetupAxes("Time (s)", "SINR (dB)");
+            ImPlot::SetupLegend(ImPlotLocation_East);
+
+            for (auto& [pci, values] : sinr_by_pci) {
+                string label = "PCI " + to_string(pci);
+
+                ImPlot::PlotLine(
+                    label.c_str(),
+                    multi_time_history.data(),
+                    values.data(),
+                    (int)values.size()
+                );
+            }
+
             ImPlot::EndPlot();
         }
 
