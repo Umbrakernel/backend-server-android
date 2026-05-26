@@ -13,6 +13,7 @@ include_directories(${SDL2_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(PNG QUIET)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZMQ REQUIRED libzmq)
@@ -44,7 +45,16 @@ target_include_directories(implot PUBLIC ${EXTERNAL_DIR}/implot)
 target_link_libraries(implot PRIVATE imgui)
 target_compile_options(implot PRIVATE -fPIC)
 
-add_executable(main ${SRC_DIR}/main.cpp)
+add_executable(main
+    ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/curl_func.cpp
+    ${SRC_DIR}/database.cpp
+    ${SRC_DIR}/imgui_ui.cpp
+    ${SRC_DIR}/json_history.cpp
+    ${SRC_DIR}/map_renderer.cpp
+    ${SRC_DIR}/socket_server.cpp
+    ${SRC_DIR}/telemetry.cpp
+)
 
 target_link_libraries(main PRIVATE 
     imgui 
@@ -56,3 +66,8 @@ target_link_libraries(main PRIVATE
     PostgreSQL::PostgreSQL
     Threads::Threads
 )
+
+if(PNG_FOUND)
+    target_compile_definitions(main PRIVATE HAVE_PNG=1)
+    target_link_libraries(main PRIVATE PNG::PNG)
+endif()
