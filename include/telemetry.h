@@ -1,9 +1,7 @@
 #pragma once
 
-#include <map>
 #include <mutex>
 #include <string>
-#include <vector>
 
 using namespace std;
 
@@ -19,6 +17,7 @@ struct Telemetry {
     int rssi = -200;
     float rssnr = -9999.0f;
     int pci = 0;
+    int earfcn = 0;
 
     string network_type = "UNKNOWN";
     string operator_name = "UNKNOWN";
@@ -26,10 +25,6 @@ struct Telemetry {
 
 struct TelemetrySnapshot {
     Telemetry current;
-    vector<float> time_history;
-    map<int, vector<float>> rsrp_by_pci;
-    map<int, vector<float>> rssi_by_pci;
-    map<int, vector<float>> sinr_by_pci;
 };
 
 class TelemetryState {
@@ -40,8 +35,4 @@ public:
 private:
     mutable std::mutex mutex_;
     Telemetry current_;
-    vector<float> time_history_;
-    map<int, vector<float>> rsrp_by_pci_;
-    map<int, vector<float>> rssi_by_pci_;
-    map<int, vector<float>> sinr_by_pci_;
 };

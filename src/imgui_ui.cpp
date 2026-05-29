@@ -74,6 +74,9 @@ void run_gui(TelemetryState* telemetry_state) {
     bool running = true;
     MapRenderer map_renderer;
     Screen current_screen = Screen::Metrics;
+    MapRenderer::HeatmapCriterion heatmap_criterion = MapRenderer::HeatmapCriterion::Altitude;
+    int heatmap_pci = -1;
+    float heatmap_radius = 50.0f;
     unique_ptr<PGconn, decltype(&PQfinish)> db(connect_db(), &PQfinish);
 
     while (running) {
@@ -91,8 +94,12 @@ void run_gui(TelemetryState* telemetry_state) {
 
         const TelemetrySnapshot snapshot = telemetry_state->snapshot();
         TelemetryHistory history;
+        TelemetryHistory heatmap_history;
+        vector<int> pcis;
         if (db) {
-            history = load_telemetry_history_from_db(db.get(), MAX_HISTORY_POINTS);
+            history = load_telemetry_history_from_db(db.get(), GRAPH_HISTORY_POINTS);
+            heatmap_history = load_telemetry_history_from_db(db.get(), HEATMAP_HISTORY_POINTS);
+            pcis = load_pcis_from_db(db.get());
         }
 
         ImGui::Begin("Telemetry");
@@ -159,7 +166,36 @@ void run_gui(TelemetryState* telemetry_state) {
 
         if (current_screen == Screen::Map) {
             ImGui::Text("OpenStreetMap");
-            map_renderer.draw(snapshot.current);
+
+            const char* criteria[] = {"RSRP", "RSRQ", "RSSI", "Altitude"};
+            int criterion_index = static_cast<int>(heatmap_criterion);
+            if (ImGui::Combo("Heatmap criterion", &criterion_index, criteria, 4)) {
+                heatmap_criterion = static_cast<MapRenderer::HeatmapCriterion>(criterion_index);
+            }
+
+            if (!pcis.empty()) {
+                vector<string> labels;
+                vector<const char*> items;
+                int current_index = 0;
+                labels.push_back("ALL");
+                for (int i = 0; i < static_cast<int>(pcis.size()); ++i) {
+                    labels.push_back(to_string(pcis[i]));
+                    if (pcis[i] == heatmap_pci) {
+                        current_index = i + 1;
+                    }
+                }
+                for (string& label : labels) {
+                    items.push_back(label.c_str());
+                }
+                if (ImGui::Combo("PCI", &current_index, items.data(), static_cast<int>(items.size()))) {
+                    heatmap_pci = current_index == 0 ? -1 : pcis[current_index - 1];
+                }
+            } else {
+                ImGui::Text("PCI: no values in DB");
+            }
+
+            ImGui::SliderFloat("IDW radius, m", &heatmap_radius, 50.0f, 500.0f, "%.0f");
+            map_renderer.draw(snapshot.current, heatmap_history, heatmap_criterion, heatmap_pci, heatmap_radius);
         }
 
         ImGui::End();

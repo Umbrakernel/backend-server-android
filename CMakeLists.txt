@@ -54,6 +54,7 @@ add_executable(main
     ${SRC_DIR}/map_renderer.cpp
     ${SRC_DIR}/socket_server.cpp
     ${SRC_DIR}/telemetry.cpp
+    ${SRC_DIR}/telemetry_json.cpp
 )
 
 target_link_libraries(main PRIVATE 

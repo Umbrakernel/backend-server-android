@@ -1,7 +1,7 @@
 #pragma once
 
 #define SERVER_ENDPOINT "tcp://*:5555"
-#define TELEMETRY_FILE "location_data.json"
+#define TELEMETRY_FILE "build/location_data.json"
 
 #define DB_HOST "localhost"
 #define DB_PORT "5433"
@@ -10,7 +10,8 @@
 #define DB_PASSWORD "1234"
 #define DB_TABLE "telemetry_metrics"
 
-#define MAX_HISTORY_POINTS 500
+#define GRAPH_HISTORY_POINTS 40000
+#define HEATMAP_HISTORY_POINTS 40000
 
 #define MAP_ZOOM 15
 #define MAP_RADIUS_TILES 1
